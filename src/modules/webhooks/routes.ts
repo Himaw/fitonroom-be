@@ -2,10 +2,12 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { query } from "../../db";
 
-const genericWebhookSchema = z.object({
-  id: z.string().min(1),
-  type: z.string().min(1)
-}).passthrough();
+const genericWebhookSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.string().min(1)
+  })
+  .passthrough();
 
 async function recordPaymentEvent(provider: string, payload: unknown) {
   const parsed = genericWebhookSchema.parse(payload);

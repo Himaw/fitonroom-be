@@ -13,10 +13,7 @@ const registerDeviceSchema = z.object({
 export async function registerDeviceRoutes(app: FastifyInstance): Promise<void> {
   app.post("/devices/register", { preHandler: app.authenticate }, async (request) => {
     const body = registerDeviceSchema.parse(request.body);
-    const installIdHash = hashInstallId(
-      body.installId,
-      env.DEVICE_INSTALL_HASH_SECRET
-    );
+    const installIdHash = hashInstallId(body.installId, env.DEVICE_INSTALL_HASH_SECRET);
 
     const result = await query(
       `insert into device_profiles

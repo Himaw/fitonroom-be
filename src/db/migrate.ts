@@ -25,9 +25,7 @@ async function recordMigration(version: string): Promise<void> {
 
 async function run(): Promise<void> {
   const migrationsDir = path.join(__dirname, "migrations");
-  const files = (await readdir(migrationsDir))
-    .filter((file) => file.endsWith(".sql"))
-    .sort();
+  const files = (await readdir(migrationsDir)).filter((file) => file.endsWith(".sql")).sort();
 
   await ensureMigrationTable();
 

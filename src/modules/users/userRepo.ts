@@ -30,10 +30,7 @@ export async function ensureAppUser(input: AuthProfileInput): Promise<AppUser> {
   });
 }
 
-async function upsertAppUser(
-  client: PoolClient,
-  input: AuthProfileInput
-): Promise<AppUser> {
+async function upsertAppUser(client: PoolClient, input: AuthProfileInput): Promise<AppUser> {
   const result = await client.query<AppUser>(
     `insert into app_users (supabase_user_id, email, display_name, avatar_url, last_seen_at)
      values ($1, $2, $3, $4, now())
@@ -44,20 +41,12 @@ async function upsertAppUser(
        avatar_url = coalesce(excluded.avatar_url, app_users.avatar_url),
        last_seen_at = now()
      returning id, supabase_user_id, email, display_name, avatar_url`,
-    [
-      input.supabaseUserId,
-      input.email ?? null,
-      input.displayName ?? null,
-      input.avatarUrl ?? null
-    ]
+    [input.supabaseUserId, input.email ?? null, input.displayName ?? null, input.avatarUrl ?? null]
   );
   return result.rows[0];
 }
 
-async function grantInitialTrialIfNeeded(
-  client: PoolClient,
-  userId: string
-): Promise<void> {
+async function grantInitialTrialIfNeeded(client: PoolClient, userId: string): Promise<void> {
   const account = await client.query<{ available_balance: number }>(
     `select available_balance from fiton_accounts where user_id = $1 for update`,
     [userId]
