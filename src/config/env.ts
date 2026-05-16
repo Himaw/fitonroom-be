@@ -9,6 +9,7 @@ const envSchema = z.object({
 
   DATABASE_URL: z.string().min(1),
   DB_SSL: z.coerce.boolean().default(false),
+  SUPABASE_URL: z.string().url().min(1),
   SUPABASE_JWT_SECRET: z.string().min(1),
   DEVICE_INSTALL_HASH_SECRET: z.string().min(16),
 

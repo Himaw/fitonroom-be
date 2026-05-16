@@ -1,6 +1,6 @@
 import fp from "fastify-plugin";
 import type { FastifyPluginAsync } from "fastify";
-import { jwtVerify, type JWTPayload } from "jose";
+import { jwtVerify, createRemoteJWKSet, decodeProtectedHeader, type JWTPayload } from "jose";
 import { env } from "../config/env";
 import { ensureAppUser } from "../modules/users/userRepo";
 
@@ -13,6 +13,8 @@ interface SupabaseJwtPayload extends JWTPayload {
   };
 }
 
+const JWKS = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
+
 const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorate("authenticate", async (request, reply) => {
     const header = request.headers.authorization;
@@ -24,13 +26,22 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
     let payload: SupabaseJwtPayload;
     try {
-      const verified = await jwtVerify(
-        token,
-        new TextEncoder().encode(env.SUPABASE_JWT_SECRET)
-      );
+      const protectedHeader = decodeProtectedHeader(token);
+      let verified;
+      
+      if (protectedHeader.alg === "HS256") {
+        verified = await jwtVerify(
+          token,
+          new TextEncoder().encode(env.SUPABASE_JWT_SECRET)
+        );
+      } else {
+        verified = await jwtVerify(token, JWKS);
+      }
+      
       payload = verified.payload as SupabaseJwtPayload;
-    } catch {
-      throw app.httpErrors.unauthorized("Invalid bearer token");
+    } catch (err: any) {
+      console.error("JWT Verification error:", err);
+      throw app.httpErrors.unauthorized(`Invalid bearer token: ${err.message}`);
     }
 
     if (!payload.sub) {
