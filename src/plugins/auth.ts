@@ -16,7 +16,7 @@ interface SupabaseJwtPayload extends JWTPayload {
 const JWKS = createRemoteJWKSet(new URL(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
 
 const authPlugin: FastifyPluginAsync = async (app) => {
-  app.decorate("authenticate", async (request, reply) => {
+  app.decorate("authenticate", async (request, _reply) => {
     const header = request.headers.authorization;
     const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
 
@@ -28,20 +28,18 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     try {
       const protectedHeader = decodeProtectedHeader(token);
       let verified;
-      
+
       if (protectedHeader.alg === "HS256") {
-        verified = await jwtVerify(
-          token,
-          new TextEncoder().encode(env.SUPABASE_JWT_SECRET)
-        );
+        verified = await jwtVerify(token, new TextEncoder().encode(env.SUPABASE_JWT_SECRET));
       } else {
         verified = await jwtVerify(token, JWKS);
       }
-      
+
       payload = verified.payload as SupabaseJwtPayload;
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error("JWT Verification error:", err);
-      throw app.httpErrors.unauthorized(`Invalid bearer token: ${err.message}`);
+      throw app.httpErrors.unauthorized(`Invalid bearer token: ${message}`);
     }
 
     if (!payload.sub) {
@@ -51,8 +49,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     const appUser = await ensureAppUser({
       supabaseUserId: payload.sub,
       email: payload.email,
-      displayName:
-        payload.user_metadata?.full_name ?? payload.user_metadata?.name,
+      displayName: payload.user_metadata?.full_name ?? payload.user_metadata?.name,
       avatarUrl: payload.user_metadata?.avatar_url
     });
 

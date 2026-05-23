@@ -3,16 +3,20 @@ import { z } from "zod";
 import { query } from "../../db";
 
 export async function registerPrivacyRoutes(app: FastifyInstance): Promise<void> {
-  app.post("/privacy/delete-account-data", { preHandler: app.authenticate }, async (request, reply) => {
-    const result = await query(
-      `insert into deletion_requests (user_id, status)
+  app.post(
+    "/privacy/delete-account-data",
+    { preHandler: app.authenticate },
+    async (request, reply) => {
+      const result = await query(
+        `insert into deletion_requests (user_id, status)
        values ($1, 'requested')
        returning id, status, requested_at`,
-      [request.auth.userId]
-    );
-    reply.code(202);
-    return { deletionRequest: result.rows[0] };
-  });
+        [request.auth.userId]
+      );
+      reply.code(202);
+      return { deletionRequest: result.rows[0] };
+    }
+  );
 
   app.post("/privacy/delete-photo/:id", { preHandler: app.authenticate }, async (request) => {
     const params = z.object({ id: z.string().uuid() }).parse(request.params);

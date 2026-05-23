@@ -3,9 +3,7 @@ import { z } from "zod";
 import { query } from "../../db";
 import { resultPublicUrl } from "../../services/aws/s3";
 
-function withUrl<T extends { result_s3_key?: string; thumbnail_s3_key?: string | null }>(
-  row: T
-) {
+function withUrl<T extends { result_s3_key?: string; thumbnail_s3_key?: string | null }>(row: T) {
   return {
     ...row,
     resultUrl: row.result_s3_key ? resultPublicUrl(row.result_s3_key) : null,
