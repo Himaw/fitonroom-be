@@ -175,6 +175,27 @@ The first authenticated call creates or updates the `app_users` row, creates a F
 
 ## Useful Endpoint Examples
 
+Get the Settings/Profile summary:
+
+```bash
+curl http://localhost:4000/me/profile-summary \
+  -H "Authorization: Bearer <SUPABASE_ACCESS_TOKEN>"
+```
+
+Expected response:
+
+```json
+{
+  "displayName": "Himasara",
+  "email": "user@example.com",
+  "avatarUrl": null,
+  "tokensRemaining": 5,
+  "completedFitons": 0
+}
+```
+
+The backend derives the user from the verified Supabase JWT and reads the summary from `app_users`, `fiton_accounts`, and `try_on_results`. The client should not send a user id for this endpoint.
+
 Register a device:
 
 ```bash
@@ -291,6 +312,7 @@ Implemented:
 - Typed Fastify API shell.
 - Supabase JWT verification middleware.
 - App user sync and initial 5-Fiton grant.
+- Authenticated Settings/Profile summary endpoint.
 - Device registration with hashed install ID.
 - Fiton balance and ledger read endpoints.
 - S3 pre-signed upload URL endpoints.
