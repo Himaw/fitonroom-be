@@ -70,7 +70,7 @@ async function grantInitialTrialIfNeeded(client: PoolClient, userId: string): Pr
 
   const existing = await client.query(
     `select id from fiton_ledger_entries
-     where user_id = $1 and source = 'initial_trial'
+     where user_id = $1 and source in ('initial_signup_bonus', 'initial_trial')
      limit 1`,
     [userId]
   );
@@ -90,7 +90,7 @@ async function grantInitialTrialIfNeeded(client: PoolClient, userId: string): Pr
   await client.query(
     `insert into fiton_ledger_entries
       (user_id, entry_type, amount, balance_after, source, reference_id)
-     values ($1, 'grant', 5, $2, 'initial_trial', 'initial_trial')`,
+     values ($1, 'credit', 5, $2, 'initial_signup_bonus', 'initial_signup_bonus')`,
     [userId, nextBalance]
   );
 }
