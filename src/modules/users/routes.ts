@@ -1,9 +1,19 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { query } from "../../db";
-import { getAppUser } from "./userRepo";
+import { getAppUser, getProfileSummary } from "./userRepo";
 
 export async function registerUserRoutes(app: FastifyInstance): Promise<void> {
+  app.get("/me/profile-summary", { preHandler: app.authenticate }, async (request) => {
+    const profileSummary = await getProfileSummary(request.auth.userId);
+
+    if (!profileSummary) {
+      throw app.httpErrors.notFound("Profile not found");
+    }
+
+    return profileSummary;
+  });
+
   app.patch("/users/me", { preHandler: app.authenticate }, async (request) => {
     const body = z
       .object({

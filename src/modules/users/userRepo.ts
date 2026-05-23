@@ -9,6 +9,22 @@ export interface AppUser {
   avatar_url: string | null;
 }
 
+export interface ProfileSummary {
+  displayName: string;
+  email: string | null;
+  avatarUrl: string | null;
+  tokensRemaining: number;
+  completedFitons: number;
+}
+
+interface ProfileSummaryRow {
+  email: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  tokens_remaining: number | string | null;
+  completed_fitons: number | string | null;
+}
+
 export interface AuthProfileInput {
   supabaseUserId: string;
   email?: string;
@@ -87,4 +103,34 @@ export async function getAppUser(userId: string): Promise<AppUser | null> {
     [userId]
   );
   return result.rows[0] ?? null;
+}
+
+export async function getProfileSummary(userId: string): Promise<ProfileSummary | null> {
+  const result = await query<ProfileSummaryRow>(
+    `select
+       u.email,
+       u.display_name,
+       u.avatar_url,
+       coalesce(fa.available_balance, 0)::int as tokens_remaining,
+       count(tor.id)::int as completed_fitons
+     from app_users u
+     left join fiton_accounts fa on fa.user_id = u.id
+     left join try_on_results tor on tor.user_id = u.id and tor.deleted_at is null
+     where u.id = $1
+     group by u.id, fa.available_balance`,
+    [userId]
+  );
+
+  const row = result.rows[0];
+  if (!row) return null;
+
+  const fallbackName = row.email?.split("@")[0] ?? "Fiton Room user";
+
+  return {
+    displayName: row.display_name || fallbackName,
+    email: row.email,
+    avatarUrl: row.avatar_url,
+    tokensRemaining: Number(row.tokens_remaining ?? 0),
+    completedFitons: Number(row.completed_fitons ?? 0)
+  };
 }
